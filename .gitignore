@@ -1,0 +1,8 @@
+/crc_shiny_app_seurat.rds
+/.catlas-restore.*
+tmp_for_catlas/
+.Rhistory
+.RData
+.Rproj.user/
+.Renviron
+*.log

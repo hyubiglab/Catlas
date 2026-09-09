@@ -1,0 +1,23 @@
+# Install as:
+# /etc/systemd/system/catlas-shiny.service.d/override.conf
+#
+# Confirm that CATLAS_PORT matches the current reverse-proxy/service port before
+# restarting the production service.
+
+[Service]
+WorkingDirectory=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/v2
+UMask=0077
+
+ExecStart=
+ExecStart=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/v2/start_catlas_v2.sh
+
+Environment="CATLAS_R_BIN=/home/minwook/anaconda3/envs/crc_shiny/bin/R"
+Environment="CATLAS_HOST=127.0.0.1"
+Environment="CATLAS_PORT=3838"
+Environment="CATLAS_PROJECT_DIR=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas"
+Environment="CATLAS_APP_DIR=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/v2"
+Environment="CATLAS_DATA_PATH=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/crc_shiny_app_seurat.rds"
+Environment="CATLAS_TMP_ROOT=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/tmp_for_catlas"
+Environment="TMPDIR=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/tmp_for_catlas"
+Environment="TMP=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/tmp_for_catlas"
+Environment="TEMP=/home/minwook/Projects/BRL/SNHG16/Shiny_CRC_atlas/tmp_for_catlas"

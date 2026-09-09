@@ -1,0 +1,4 @@
+role	path	access_policy	notes
+source_app	../CRC_shiny_running.R	read_only	Original application retained unchanged
+seurat_data	../crc_shiny_app_seurat.rds	read_only	Loaded directly; not copied into v2
+runtime_temp	../tmp_for_catlas	derived_writable	Persistent parent for per-process Rtmp directories
