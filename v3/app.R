@@ -94,10 +94,9 @@ PAL <- c("#4C72B0","#DD8452","#55A868","#C44E52","#8172B3","#937860",
          "#BCBD22","#17BECF","#AEC7E8","#FFBB78","#98DF8A","#FF9896")
 pal_for <- function(levels) setNames(rep(PAL, length.out = length(levels)), levels)
 
-# Condition can have several categories (e.g. Tumor / Normal / Malignant /
-# Epithelial). Give the known ones stable colors; fall back to PAL for others.
-COND_PAL <- c(Tumor = "#C44E52", Normal = "#4C72B0",
-              Malignant = "#8172B3", Epithelial = "#55A868")
+# Condition is Tumor / Normal. Give those stable colors; the N-category fallback
+# below still applies should Condition ever carry more levels.
+COND_PAL <- c(Tumor = "#C44E52", Normal = "#4C72B0")
 cond_color <- function(levels) {
   out <- COND_PAL[levels]
   miss <- is.na(out)

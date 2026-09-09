@@ -49,17 +49,17 @@ bash v2/start_catlas_v2.sh
 For systemd, change only `CATLAS_APP_DIR` (or `WorkingDirectory`) to `.../v3`;
 port, temp dir, and service account stay the same.
 
-## Condition categories
+## Condition vs cell type
 
-`Condition` may hold more than two categories (e.g. **Tumor / Normal /
-Malignant / Epithelial**). With *Compare conditions side-by-side* on:
+`Condition` is **Tumor / Normal** (the compare axis). Categories such as
+**Malignant** and **Epithelial** are **cell types** — values of `Cell_type_v2`
+(→ `Major_celltype`) — so they appear automatically in the sidebar **Cell type**
+filter and in `Split by → Cell type`, no configuration needed.
 
-- **2 selected conditions** → back-to-back **split violin** + 2-panel UMAP
-- **3+ selected conditions** → one **violin facet per condition** + N-panel UMAP
-
-Use the sidebar **Condition** checkboxes to restrict the comparison (e.g. tick
-only Tumor + Normal for the classic side-by-side view). Known categories get
-stable colors (`COND_PAL` in `app.R`); adjust that vector to taste.
+*Compare conditions side-by-side* therefore renders the classic back-to-back
+**split violin** + 2-panel UMAP for Tumor vs Normal. (The violin also handles a
+3+ category axis via per-category facets, as a general fallback if `Condition`
+ever carries more levels.)
 
 ## Notes / roadmap
 
