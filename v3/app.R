@@ -257,17 +257,19 @@ server <- function(input, output, session) {
     conds <- sort(unique(df$Condition))
 
     if (isTRUE(input$compare) && gv != "Condition" && length(conds) == 2) {
-      # split violin: two conditions back-to-back per group
-      plot_ly(type = "violin") %>%
-        add_trace(data = df[df$Condition == conds[1], ], x = ~.g, y = ~.expr,
-                  name = conds[1], side = "negative", opacity = 0.6,
+      # split violin: two conditions back-to-back per group.
+      # (violinmode defaults to "overlay"; setting it in layout() errors on some
+      #  plotly versions, so we rely on the default.)
+      plot_ly() %>%
+        add_trace(type = "violin", data = df[df$Condition == conds[1], ],
+                  x = ~.g, y = ~.expr, name = conds[1], side = "negative", opacity = 0.6,
                   line = list(color = COND_COLORS[1]), fillcolor = COND_COLORS[1],
                   points = FALSE, meanline = list(visible = TRUE)) %>%
-        add_trace(data = df[df$Condition == conds[2], ], x = ~.g, y = ~.expr,
-                  name = conds[2], side = "positive", opacity = 0.6,
+        add_trace(type = "violin", data = df[df$Condition == conds[2], ],
+                  x = ~.g, y = ~.expr, name = conds[2], side = "positive", opacity = 0.6,
                   line = list(color = COND_COLORS[2]), fillcolor = COND_COLORS[2],
                   points = FALSE, meanline = list(visible = TRUE)) %>%
-        layout(violinmode = "overlay", xaxis = list(title = ""),
+        layout(xaxis = list(title = ""),
                yaxis = list(title = "log-norm expression"))
     } else {
       lv <- levels(df$.g)
