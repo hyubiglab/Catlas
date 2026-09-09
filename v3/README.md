@@ -49,6 +49,18 @@ bash v2/start_catlas_v2.sh
 For systemd, change only `CATLAS_APP_DIR` (or `WorkingDirectory`) to `.../v3`;
 port, temp dir, and service account stay the same.
 
+## Condition categories
+
+`Condition` may hold more than two categories (e.g. **Tumor / Normal /
+Malignant / Epithelial**). With *Compare conditions side-by-side* on:
+
+- **2 selected conditions** → back-to-back **split violin** + 2-panel UMAP
+- **3+ selected conditions** → one **violin facet per condition** + N-panel UMAP
+
+Use the sidebar **Condition** checkboxes to restrict the comparison (e.g. tick
+only Tumor + Normal for the classic side-by-side view). Known categories get
+stable colors (`COND_PAL` in `app.R`); adjust that vector to taste.
+
 ## Notes / roadmap
 
 - 98k points render via `scattergl` (WebGL). If the server GPU/soft-render is

@@ -93,7 +93,17 @@ PAL <- c("#4C72B0","#DD8452","#55A868","#C44E52","#8172B3","#937860",
          "#DA8BC3","#8C8C8C","#CCB974","#64B5CD","#E377C2","#7F7F7F",
          "#BCBD22","#17BECF","#AEC7E8","#FFBB78","#98DF8A","#FF9896")
 pal_for <- function(levels) setNames(rep(PAL, length.out = length(levels)), levels)
-COND_COLORS <- c("#C44E52", "#4C72B0")  # first two conditions (e.g. Tumor / Normal)
+
+# Condition can have several categories (e.g. Tumor / Normal / Malignant /
+# Epithelial). Give the known ones stable colors; fall back to PAL for others.
+COND_PAL <- c(Tumor = "#C44E52", Normal = "#4C72B0",
+              Malignant = "#8172B3", Epithelial = "#55A868")
+cond_color <- function(levels) {
+  out <- COND_PAL[levels]
+  miss <- is.na(out)
+  if (any(miss)) out[miss] <- PAL[seq_len(sum(miss))]
+  setNames(unname(out), levels)
+}
 
 # --------------------------------------------------------------------------- #
 #  UI                                                                          #
@@ -254,30 +264,45 @@ server <- function(input, output, session) {
   output$violin <- renderPlotly({
     df <- cells(); gv <- input$split_by
     df$.g <- factor(df[[gv]])
-    conds <- sort(unique(df$Condition))
+    conds <- sort(unique(as.character(df$Condition)))
+
+    # grouped violin across the split axis (used stand-alone and per facet)
+    grouped_violin <- function(d) {
+      lv <- levels(factor(d$.g))
+      plot_ly(d, x = ~.g, y = ~.expr, type = "violin", color = ~.g,
+              colors = pal_for(lv), points = FALSE,
+              box = list(visible = TRUE), meanline = list(visible = TRUE),
+              showlegend = FALSE) %>%
+        layout(xaxis = list(title = ""), yaxis = list(title = "log-norm expression"))
+    }
 
     if (isTRUE(input$compare) && gv != "Condition" && length(conds) == 2) {
-      # split violin: two conditions back-to-back per group.
+      # exactly 2 conditions: split violin (back-to-back) per group.
       # (violinmode defaults to "overlay"; setting it in layout() errors on some
       #  plotly versions, so we rely on the default.)
+      cc <- cond_color(conds)
       plot_ly() %>%
         add_trace(type = "violin", data = df[df$Condition == conds[1], ],
                   x = ~.g, y = ~.expr, name = conds[1], side = "negative", opacity = 0.6,
-                  line = list(color = COND_COLORS[1]), fillcolor = COND_COLORS[1],
+                  line = list(color = cc[[conds[1]]]), fillcolor = cc[[conds[1]]],
                   points = FALSE, meanline = list(visible = TRUE)) %>%
         add_trace(type = "violin", data = df[df$Condition == conds[2], ],
                   x = ~.g, y = ~.expr, name = conds[2], side = "positive", opacity = 0.6,
-                  line = list(color = COND_COLORS[2]), fillcolor = COND_COLORS[2],
+                  line = list(color = cc[[conds[2]]]), fillcolor = cc[[conds[2]]],
                   points = FALSE, meanline = list(visible = TRUE)) %>%
         layout(xaxis = list(title = ""),
                yaxis = list(title = "log-norm expression"))
+    } else if (isTRUE(input$compare) && gv != "Condition" && length(conds) > 2) {
+      # 3+ conditions: one grouped-violin panel per condition, side by side.
+      plts <- lapply(conds, function(cc) {
+        grouped_violin(df[df$Condition == cc, ]) %>%
+          layout(annotations = list(text = cc, x = 0.5, y = 1.04, xref = "paper",
+                                    yref = "paper", showarrow = FALSE,
+                                    font = list(size = 12)))
+      })
+      subplot(plts, nrows = 1, shareY = TRUE, margin = 0.02)
     } else {
-      lv <- levels(df$.g)
-      plot_ly(df, x = ~.g, y = ~.expr, type = "violin", color = ~.g,
-              colors = pal_for(lv), points = FALSE,
-              box = list(visible = TRUE), meanline = list(visible = TRUE)) %>%
-        layout(showlegend = FALSE, xaxis = list(title = ""),
-               yaxis = list(title = "log-norm expression"))
+      grouped_violin(df)
     }
   })
 
