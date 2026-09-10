@@ -1,37 +1,109 @@
 # CATLAS v4
 
-v3에서 확인한 UMAP·violin 표시 문제와 발현 기준값 동작을 수정한 버전입니다. 기존 v3 파일과 원본 RDS는 수정하거나 덮어쓰지 않았습니다.
+CATLAS v4 is an interactive R Shiny application for exploring colorectal cancer single-cell RNA sequencing data, with a focus on lncRNA expression. Users can search for any feature available in the supplied Seurat object.
 
-| 항목 | v3 원인 | v4 변경 |
+This version improves UMAP and violin plot displays and makes the positive-expression threshold visible in both plots. The v4 implementation preserves the existing v3 files and uses the original RDS as read-only input.
+
+## Features
+
+- Explore gene expression on interactive UMAP and violin plots.
+- Compare Normal and Tumor conditions side by side.
+- Filter cells by condition, cell type, subtype, and sample.
+- Group results by cell type, subtype, sample, condition, or patient.
+- View per-group expression summaries, cell composition, and metadata.
+- Download the current per-group summary as a CSV file.
+
+## Changes from v3
+
+| Issue | Behavior in v3 | Improvement in v4 |
 | --- | --- | --- |
-| Expression UMAP의 색상 범례 겹침 | 각 조건 패널이 같은 기본 위치에 별도 colorbar를 생성했습니다. 발현 색상 범위도 패널별로 결정됐습니다. | 모든 조건이 하나의 colorbar와 공통 발현 색상 범위를 사용합니다. |
-| Normal 제목 누락 | 패널별 `layout(title=...)`이 `subplot()`에서 하나의 전체 제목으로 합쳐졌습니다. | 각 패널 위에 Normal·Tumor 제목을 개별 배치합니다. |
-| Normal·Tumor violin 사이 간격 없음 | 양쪽 반쪽 violin이 같은 범주 중심을 사용했습니다. | 중심을 좌우로 조금 이동해 작은 간격을 두고, cell type 이름은 중앙에 유지합니다. |
-| Cell-type 범례의 작은 점 | 실제 UMAP 점과 범례 점이 모두 크기 3을 사용했습니다. | 실제 점은 3으로 유지하고 범례 점은 6으로 키웁니다. 범례는 cell type당 하나이며 클릭하면 양쪽 패널의 해당 그룹이 함께 전환됩니다. |
-| 기준값 슬라이더를 움직여도 그림 변화 없음 | 기준값을 양성 비율 안내와 요약 계산에만 사용하고 UMAP·violin에는 전달하지 않았습니다. | 기준값에 따라 UMAP 회색 표시와 violin 기준선이 즉시 갱신됩니다. |
+| Overlapping expression colorbars | Each condition panel created a separate colorbar at the same default position, and expression color limits were determined separately. | Condition panels share one expression color scale and a single colorbar when cells above the threshold are present. |
+| Missing Normal panel title | Individual `layout(title=...)` settings were combined into a single figure title by `subplot()`. | Normal and Tumor titles are placed separately above their respective panels. |
+| No gap between split violin halves | Both condition halves used the same category center. | The halves are shifted slightly left and right to create a small gap, while group labels remain centered. |
+| Small cell-type legend markers | Both UMAP points and legend markers used size 3. | UMAP points retain size 3, while legend markers use size 6. Each group has one legend entry, and clicking it toggles that group across both condition panels. |
+| Threshold changes were not visible in the plots | The threshold affected positivity notes and summaries but was not passed to the UMAP or violin functions. | Changing the threshold immediately updates gray UMAP cells and the dashed threshold line on the violin plot. |
 
-양성 발현은 **`expression > threshold`**입니다. 기준값과 같은 세포도 포함하여 **`expression <= threshold`인 세포는 UMAP에서 회색**으로 표시합니다. Expression 모드와 Group 모드에 모두 적용되며, 기준값을 초과한 세포만 해당 모드의 색상을 사용합니다.
+## Positive-expression threshold
 
-Violin에는 현재 기준값을 가로 점선으로 표시합니다. 기준값을 움직여도 세포를 제거하지 않으므로 violin 분포, 요약의 전체 세포 수 `n_cells`, 평균·중앙값의 계산 대상은 유지됩니다. 요약 표와 CSV에는 양성 세포 수 `n_positive`와 적용 기준값 `threshold`를 추가했습니다. `pct_pos`는 `100 × n_positive / n_cells`입니다.
+A cell is positive when **`expression > threshold`**. Cells with **`expression <= threshold`**, including cells exactly at the threshold, appear gray on the UMAP.
 
-슬라이더의 최댓값은 선택한 유전자의 최대 발현량에 맞춰 0.1 단위로 올림하며, 최소 3을 유지합니다. 유전자를 바꿨을 때 기존 기준값이 새 범위 안에 있으면 유지합니다. Condition 또는 Cell type을 모두 해제하면 선택된 세포가 없다는 안내를 표시합니다. 선택 사항인 Sub-type과 Sample은 비워 두면 해당 필터를 적용하지 않습니다.
+This rule applies to both UMAP color modes:
 
-앱은 `/home/minwook/Shiny_CRC_atlas/Catlas/v4/app.R`이며, UMAP과 violin 함수는 각각 `R/umap.R`, `R/violin.R`에 있습니다. 데이터는 `/home/minwook/Shiny_CRC_atlas/crc_shiny_app_seurat.rds`를 읽기 전용으로 사용합니다. 실행 스크립트는 `start_catlas_v4.sh`입니다.
+- **Expression:** Cells above the threshold use the shared continuous expression scale.
+- **Group:** Cells above the threshold use their group color.
 
-실행 스크립트의 기본 주소는 `127.0.0.1:4510`입니다. 현재 운영 서비스는 여전히 v3로 실행되며 4510 포트를 사용하므로, v4 미리보기는 별도 포트로 실행합니다.
+The violin plot shows the current threshold as a horizontal dashed line. Changing the threshold does not remove cells from the selected population, so the violin distributions, total cell counts, and the cells used to calculate means and medians remain unchanged.
+
+The summary table and CSV contain the selected grouping column and these fields:
+
+| Field | Description |
+| --- | --- |
+| `n_cells` | Total number of selected cells in the group. |
+| `n_positive` | Number of cells with expression strictly greater than the threshold. |
+| `pct_pos` | `100 * n_positive / n_cells`, rounded to one decimal place. |
+| `threshold` | The threshold used for the summary. |
+| `mean` | Mean expression across all selected cells in the group, rounded to three decimal places. |
+| `median` | Median expression across all selected cells in the group, rounded to three decimal places. |
+
+The slider maximum follows the selected gene's maximum expression, rounded upward to the next 0.1 increment, with a minimum upper limit of 3. When a different gene is selected, the current threshold is retained if it remains within the new range; otherwise, it is reduced to the new maximum.
+
+Clearing all Condition or Cell type selections produces a message that no cells match the filters. Leaving the optional Sub-type or Sample selections empty applies no filter for that field.
+
+## Files and data
+
+| File | Purpose |
+| --- | --- |
+| [app.R](app.R) | Shiny interface, data loading, filters, summaries, and downloads. |
+| [R/umap.R](R/umap.R) | UMAP panels, shared expression color scale, group legends, and threshold coloring. |
+| [R/violin.R](R/violin.R) | Violin plots, condition spacing, and threshold overlays. |
+| [start_catlas_v4.sh](start_catlas_v4.sh) | Launcher that configures paths, temporary directories, host, and port before starting R. |
+| [tests/run_checks.R](tests/run_checks.R) | Synthetic regression checks for plot construction and Shiny reactive behavior. |
+
+The original server layout uses:
+
+- Application: `/home/minwook/Shiny_CRC_atlas/Catlas/v4/app.R`
+- Read-only input data: `/home/minwook/Shiny_CRC_atlas/crc_shiny_app_seurat.rds`
+- R executable: `/home/minwook/miniconda3/envs/crc_shiny/bin/R`
+
+The application reads expression values from the RNA assay's `data` layer, with a fallback to the `data` slot for compatible Seurat versions.
+
+## Requirements
+
+Use a Linux environment with Bash and an R environment containing `shiny`, `Seurat`, `Matrix`, `ggplot2`, `dplyr`, `DT`, and `plotly`. The plotting code also uses `htmltools`, and the regression checks use `jsonlite`.
+
+The launcher requires read access to the RDS file and write access to its temporary-directory parent. By default, temporary files are created under `v4/tmp_for_catlas`, with directory permissions set to `0700`.
+
+## Preview on the original server
+
+The launcher defaults to `127.0.0.1:4510`. At the time v4 was prepared, the documented production service used v3 on port 4510. Confirm the current service configuration and use a separate available port for a v4 preview.
 
 ```bash
-CATLAS_PORT=4511 /home/minwook/Shiny_CRC_atlas/Catlas/v4/start_catlas_v4.sh
+CATLAS_PORT=4511 bash /home/minwook/Shiny_CRC_atlas/Catlas/v4/start_catlas_v4.sh
 ```
 
-서버 내 접속 주소는 `http://127.0.0.1:4511`입니다. 실행 중인 v3와 같은 4510 포트에 두 번째 앱을 실행하지 마세요. 운영 systemd 서비스의 실행 경로와 Apache 설정은 변경하지 않았습니다.
+The preview is accessible at `http://127.0.0.1:4511` on the server. This loopback address refers to the machine running the application. Keep the preview port distinct from the port used by an existing service.
 
-검증 명령은 다음과 같습니다.
+The v4 implementation did not change the production systemd entry point or Apache configuration. Publishing code to the `v4` branch does not switch the running web service to v4.
+
+For another server layout, set `CATLAS_PROJECT_DIR`, `CATLAS_APP_DIR`, `CATLAS_DATA_PATH`, and `CATLAS_R_BIN` to the appropriate locations. `CATLAS_TMP_ROOT`, `CATLAS_HOST`, and `CATLAS_PORT` can also be overridden through environment variables.
+
+## Validation
+
+Run the synthetic regression checks with the configured R environment:
 
 ```bash
 /home/minwook/miniconda3/envs/crc_shiny/bin/Rscript /home/minwook/Shiny_CRC_atlas/Catlas/v4/tests/run_checks.R
 ```
 
-54개 합성 데이터 검사가 통과했습니다. 검사는 Plotly에 전달되는 패널 제목·공통 색상 범위·범례 크기·회색 세포 수·violin 간격·기준선과 실제 Shiny 반응형 기준값/요약 갱신을 확인하며, RDS를 읽거나 서비스를 시작하지 않습니다. 양성 세포가 하나만 있을 때도 발현 색상을 JSON 배열로 유지하여 colorbar가 사라지지 않도록 검사합니다. 별도로 실제 RDS를 읽어 98,428개 세포로 앱 초기화가 완료되는 것도 확인했습니다.
+The recorded v4 validation passed **54 synthetic regression checks**. These checks do not load the atlas RDS or start a web server. They cover:
 
-Firefox에서 양쪽 패널 제목, 양성 세포가 하나일 때를 포함한 단일 colorbar, 지름 6인 범례 점과 양쪽 패널의 그룹 전환, violin 간격과 기준선을 확인했습니다. 검사 서버의 헤드리스 브라우저는 WebGL을 지원하지 않아 UMAP 점의 색상 시각 검사는 진단용 화면에서만 SVG로 대체하여 진행했습니다. 실제 앱은 `scattergl`을 유지합니다.
+- Condition panel titles and a shared expression color scale.
+- UMAP point sizes, legend marker sizes, and linked legend groups.
+- Gray-cell counts at different thresholds, including equality at the threshold.
+- Split violin spacing, centered labels, and threshold lines.
+- Reactive threshold and summary updates in the actual Shiny server function.
+- Single-positive-cell cases, ensuring expression colors remain JSON arrays and retain the shared colorbar.
+
+A separate recorded validation loaded the real RDS and initialized the application with **98,428 cells**.
+
+The recorded Firefox review checked both panel titles, the single colorbar including single-positive-cell cases, size-6 legend markers and linked group toggles, violin spacing, and threshold lines. The headless test browser did not support WebGL, so the visual check of UMAP point colors used SVG rendering in a diagnostic view only. The application itself continues to use Plotly `scattergl` for UMAP cell points.
